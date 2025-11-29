@@ -222,4 +222,22 @@ export const rssSources: RSSSource[] = [
       },
     ],
   },
+  {
+    name: "snn",
+    displayName: "خبرگزاری دانشجو",
+    websiteUrl: "https://snn.ir",
+    iconUrl: "https://snn.ir/client/themes/fa/main/img/favicon-152x152.png",
+    categories: [
+      {
+        id: "economic",
+        category: "اقتصاد",
+        rssUrl: "https://snn.ir/fa/rss/7",
+      },
+      {
+        id: "sports",
+        category: "ورزشی",
+        rssUrl: "https://snn.ir/fa/rss/10",
+      },
+    ],
+  },
 ];

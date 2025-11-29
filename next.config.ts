@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
         hostname: "liara-s3.dastyar.io",
       },
     ],
+    
   },
 };
 

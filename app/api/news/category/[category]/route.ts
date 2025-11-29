@@ -48,9 +48,9 @@ export async function GET(
               pubDate: item.pubDate ? new Date(item.pubDate).getTime() : 0,
               agency: agency.name,
               agencyDisplay: agency.displayName,
-              categoryId: cat.id,
-              categoryName: cat.category,
-              coverImage: coverImage || null, // new field
+              categoryId: cat.id, // category slug (english)
+              categoryName: cat.category, // category Persian name
+              coverImage: coverImage || null,
             };
           }) ?? [];
 
@@ -69,7 +69,8 @@ export async function GET(
 
   return NextResponse.json({
     success: true,
-    category,
+    category, // the slug, e.g., "sports"
+    categoryName: merged[0]?.categoryName || "", // Persian name
     totalNews: merged.length,
     news: merged,
   });
