@@ -43,11 +43,11 @@
   flex-wrap: wrap;
   gap: 20px;
   margin-top: 20px;
-  align-items: stretch; /* all items in a row will stretch to tallest */
+  align-items: stretch;
 }
 
 .newsCard {
-  flex: 1 1 calc(33.333% - 13.333px); /* 3 columns with gap adjustment */
+  flex: 1 1 calc(33.333% - 13.333px);
   display: flex;
   flex-direction: column;
   background: #ffffff;

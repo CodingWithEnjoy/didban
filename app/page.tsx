@@ -148,9 +148,31 @@ export default function Home() {
     alert("لینک کپی شد!");
   };
 
+  const [aqi, setAqi] = useState<any>(null);
+
+  useEffect(() => {
+    fetch("/api/aqi")
+      .then((res) => res.json())
+      .then((data) => setAqi(data))
+      .catch((err) => console.error(err));
+  }, []);
+
+  const toPersianNumber = (num: string | number) => {
+    return String(num).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[parseInt(d, 10)]);
+  };
+
+  const getAqiColor = (aqi: number) => {
+    if (aqi <= 50) return "#16a34a"; // Green - Good
+    if (aqi <= 100) return "#eab308"; // Yellow - Moderate
+    if (aqi <= 150) return "#f97316"; // Orange - Unhealthy for sensitive
+    if (aqi <= 200) return "#dc2626"; // Red - Unhealthy
+    if (aqi <= 300) return "#9333ea"; // Purple - Very Unhealthy
+    return "#7f1d1d"; // Maroon - Hazardous
+  };
+
   return (
     <div className={styles.container}>
-      <div className={styles.col}>
+      <div className={`${styles.col} ${styles.col1}`}>
         <div className={styles.financial}>
           <div className={styles.financialTitle}>قیمت‌های لحظه‌ای</div>
           <div className={styles.financialRows}>
@@ -290,7 +312,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className={styles.col}>
+      <div className={`${styles.col} ${styles.col3}`}>
         {weather && (
           <div className={styles.weatherCard}>
             <div className={styles.weatherLeft}>
@@ -312,6 +334,32 @@ export default function Home() {
             <div className={styles.weatherRight}>
               <div>{getShamsiDate(weather.date)}</div>
               <span>تهران</span>
+            </div>
+          </div>
+        )}
+
+        {aqi && (
+          <div className={styles.aqiCard}>
+            <div className={styles.aqiHeader}>
+              <h3>شاخص کیفیت هوا</h3>
+
+              <p
+                className={styles.aqiValue}
+                style={{ color: getAqiColor(Number(aqi.aqi)) }}
+              >
+                {toPersianNumber(aqi.aqi)}
+              </p>
+
+              <div className={styles.aqiPollutant}>
+                <p> آلاینده اصلی : {aqi.pollutant}</p>
+              </div>
+            </div>
+
+            <div className={styles.aqiDivider}></div>
+
+            <div className={styles.aqiFooter}>
+              <p>باد: {toPersianNumber(aqi.wind)}</p>
+              <p>رطوبت: {toPersianNumber(aqi.humidity)}</p>
             </div>
           </div>
         )}

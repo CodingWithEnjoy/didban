@@ -151,6 +151,11 @@ export const rssSources: RSSSource[] = [
         category: "ورزشی",
         rssUrl: "https://www.isna.ir/rss/tp/24",
       },
+            {
+        id: "politics",
+        category: "سیاست",
+        rssUrl: "https://www.isna.ir/rss/tp/14",
+      },
     ],
   },
   {
@@ -216,6 +221,11 @@ export const rssSources: RSSSource[] = [
         rssUrl: "https://www.entekhab.ir/fa/rss/5",
       },
       {
+        id: "politics",
+        category: "سیاست",
+        rssUrl: "https://www.entekhab.ir/fa/rss/2",
+      },
+      {
         id: "sports",
         category: "ورزشی",
         rssUrl: "https://www.entekhab.ir/fa/rss/9",
@@ -232,6 +242,11 @@ export const rssSources: RSSSource[] = [
         id: "economic",
         category: "اقتصاد",
         rssUrl: "https://snn.ir/fa/rss/7",
+      },
+      {
+        id: "politics",
+        category: "سیاست",
+        rssUrl: "https://snn.ir/fa/rss/6",
       },
       {
         id: "sports",

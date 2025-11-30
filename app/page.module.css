@@ -396,7 +396,7 @@
 
 .linkSection button {
   margin-bottom: -5px;
-  opacity: .8;
+  opacity: 0.8;
 }
 
 .linkInput {
@@ -469,4 +469,63 @@
   color: #172554b3;
   font-size: 16px;
   margin-top: 10px;
+}
+
+.aqiCard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #f2f2f2;
+  padding: 20px;
+  margin-top: 20px;
+  position: sticky;
+  top: 215px;
+}
+
+.aqiCard h3 {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.aqiHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.aqiValue {
+  font-size: 32px;
+  font-weight: 950;
+  margin-top: 5px;
+  text-align: center;
+}
+
+.aqiPollutant {
+  color: #666666;
+  font-size: 12px;
+  text-align: center;
+}
+
+.aqiDivider {
+  width: 100%;
+  height: 2px;
+  background: #e5e5e5;
+}
+
+.aqiFooter {
+  width: 100%;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 5px;
 }
