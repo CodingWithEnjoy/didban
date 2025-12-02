@@ -2,17 +2,10 @@ import { NextResponse } from "next/server";
 import Parser from "rss-parser";
 import { rssSources } from "@/lib/data/rssSources";
 
-// ------------------
-// PERFORMANCE BOOSTS
-// ------------------
-
-// Cache for 2 minutes (adjust as you like)
 const CACHE_DURATION = 1000 * 60;
-
 let cachedData: any = null;
 let lastFetch = 0;
 
-// Limit concurrency to avoid slow feeds blocking others
 const concurrencyLimit = 5;
 async function asyncPool(tasks: any[]) {
   const results: any[] = [];
@@ -21,7 +14,6 @@ async function asyncPool(tasks: any[]) {
   for (const task of tasks) {
     const p = task().then((res: any) => results.push(res));
     executing.push(p);
-
     if (executing.length >= concurrencyLimit) {
       await Promise.race(executing);
       executing.splice(executing.indexOf(p), 1);
@@ -38,20 +30,42 @@ const parser = new Parser({
   },
 });
 
-// ------------------
-// MAIN API
-// ------------------
-
-export async function GET() {
+export async function GET(req: Request) {
   const now = Date.now();
+  const { searchParams } = new URL(req.url);
 
-  // 1️⃣ Return cached data if fresh
-  if (cachedData && now - lastFetch < CACHE_DURATION) {
+  const keywordParam = searchParams.get("keyword");
+  const limit = Number(searchParams.get("limit") || 0);
+
+  const keywords = keywordParam
+    ? keywordParam.split(",").map((k) => k.trim().toLowerCase())
+    : [];
+
+  const needsFiltering = keywords.length > 0;
+
+  if (!needsFiltering && cachedData && now - lastFetch < CACHE_DURATION) {
     return NextResponse.json(cachedData);
   }
 
+  if (needsFiltering && cachedData) {
+    let filtered = cachedData.news.filter((item: any) =>
+      keywords.some(
+        (kw) =>
+          item.title?.toLowerCase().includes(kw) ||
+          item.content?.toLowerCase().includes(kw)
+      )
+    );
+
+    if (limit) filtered = filtered.slice(0, limit);
+
+    return NextResponse.json({
+      success: true,
+      totalNews: filtered.length,
+      news: filtered,
+    });
+  }
+
   try {
-    // 2️⃣ Prepare async feed tasks
     const feedTasks = rssSources.flatMap((agency) =>
       agency.categories.map((cat) => async () => {
         try {
@@ -84,20 +98,15 @@ export async function GET() {
             }) ?? [];
 
           return items;
-        } catch (e) {
-          console.error("RSS error:", agency.name, cat.id, e);
+        } catch {
           return [];
         }
       })
     );
 
-    // 3️⃣ Run with concurrency limit
     const merged = await asyncPool(feedTasks);
-
-    // 4️⃣ Sort by date
     merged.sort((a, b) => b.pubDate - a.pubDate);
 
-    // 5️⃣ Cache results
     cachedData = {
       success: true,
       totalNews: merged.length,
@@ -105,9 +114,26 @@ export async function GET() {
     };
     lastFetch = now;
 
-    return NextResponse.json(cachedData);
-  } catch (err) {
-    console.error("News Error:", err);
+    let output = merged;
+
+    if (needsFiltering) {
+      output = merged.filter((item) =>
+        keywords.some(
+          (kw) =>
+            item.title?.toLowerCase().includes(kw) ||
+            item.content?.toLowerCase().includes(kw)
+        )
+      );
+    }
+
+    if (limit) output = output.slice(0, limit);
+
+    return NextResponse.json({
+      success: true,
+      totalNews: output.length,
+      news: output,
+    });
+  } catch {
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

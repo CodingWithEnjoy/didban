@@ -24,6 +24,13 @@ export default function Header() {
               <Emoji name="rolled-up-newspaper" width={16} />
             </EmojiProvider>
           </Link>
+
+          <Link href="/closure">
+            تعطیلی{" "}
+            <EmojiProvider data={emojiData}>
+              <Emoji name="factory" width={16} />
+            </EmojiProvider>
+          </Link>
         </div>
 
         <div className={styles.headerLinksDivider}></div>

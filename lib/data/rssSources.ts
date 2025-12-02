@@ -9,6 +9,12 @@ export const rssSources: RSSSource[] = [
       "https://www.mehrnews.com/resources/theme/mehrnews/img/favicon.ico",
     categories: [
       {
+        id: "all",
+        category: "جدیدترین ها",
+        rssUrl: "https://www.mehrnews.com/rss",
+      },
+
+      {
         id: "art",
         category: "هنر",
         rssUrl: "https://www.mehrnews.com/rss/tp/1",
@@ -37,6 +43,11 @@ export const rssSources: RSSSource[] = [
     iconUrl: "https://www.tasnimnews.com/favicon.ico",
     categories: [
       {
+        id: "all",
+        category: "جدیدترین ها",
+        rssUrl: "https://www.tasnimnews.com/fa/rss/feed/0/0/8/1/TopStories",
+      },
+      {
         id: "economic",
         category: "اقتصاد",
         rssUrl: "https://www.tasnimnews.com/fa/rss/feeds/7/0/0/0",
@@ -57,7 +68,7 @@ export const rssSources: RSSSource[] = [
       {
         id: "all",
         category: "جدیدترین ها",
-        rssUrl: "https://fararu.com/feeds/",
+        rssUrl: "https://fararu.com/fa/feeds",
       },
     ],
   },
@@ -96,7 +107,12 @@ export const rssSources: RSSSource[] = [
       "https://www.irna.ir/resources/theme/irna/img/icons/apple-touch-icon-152x152.png",
     categories: [
       {
-        id: "economy",
+        id: "all",
+        category: "جدیدترین ها",
+        rssUrl: "https://www.irna.ir/rss",
+      },
+      {
+        id: "economic",
         category: "اقتصاد",
         rssUrl: "https://www.irna.ir/rss/tp/20",
       },
@@ -151,33 +167,10 @@ export const rssSources: RSSSource[] = [
         category: "ورزشی",
         rssUrl: "https://www.isna.ir/rss/tp/24",
       },
-            {
+      {
         id: "politics",
         category: "سیاست",
         rssUrl: "https://www.isna.ir/rss/tp/14",
-      },
-    ],
-  },
-  {
-    name: "shahrekhabar",
-    displayName: "شهر خبر",
-    websiteUrl: "https://www.shahrekhabar.com",
-    iconUrl: "https://www.shahrekhabar.com/statics/images/micon-192.png",
-    categories: [
-      {
-        id: "art",
-        category: "هنر",
-        rssUrl: "https://www.shahrekhabar.com/rss.jsp?type=7",
-      },
-      {
-        id: "economic",
-        category: "اقتصاد",
-        rssUrl: "https://www.shahrekhabar.com/rss.jsp?type=4",
-      },
-      {
-        id: "sports",
-        category: "ورزشی",
-        rssUrl: "https://www.shahrekhabar.com/rss.jsp?type=8",
       },
     ],
   },
@@ -252,6 +245,47 @@ export const rssSources: RSSSource[] = [
         id: "sports",
         category: "ورزشی",
         rssUrl: "https://snn.ir/fa/rss/10",
+      },
+    ],
+  },
+  {
+    name: "asriran",
+    displayName: "عصر ایران",
+    websiteUrl: "https://www.asriran.com",
+    iconUrl: "https://www.asriran.com/client/themes/fa/main/img/favicon.ico",
+    categories: [
+      {
+        id: "all",
+        category: "جدیدترین ها",
+        rssUrl: "https://www.asriran.com/fa/rss/allnews",
+      },
+      {
+        id: "economic",
+        category: "اقتصاد",
+        rssUrl: "https://www.asriran.com/fa/rss/1/4",
+      },
+      {
+        id: "politics",
+        category: "سیاست",
+        rssUrl: "https://www.asriran.com/fa/rss/1/1",
+      },
+      {
+        id: "sports",
+        category: "ورزشی",
+        rssUrl: "https://www.asriran.com/fa/rss/1/6",
+      },
+    ],
+  },
+  {
+    name: "eghtesadonline",
+    displayName: "اقتصاد آنلاین",
+    websiteUrl: "https://www.eghtesadonline.com",
+    iconUrl: "https://www.eghtesadonline.com/client/themes/fa/main/img/favicon.ico",
+    categories: [
+      {
+        id: "all",
+        category: "جدیدترین ها",
+        rssUrl: "https://www.eghtesadonline.com/fa/updates/allnews",
       },
     ],
   },

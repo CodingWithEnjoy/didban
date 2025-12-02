@@ -20,7 +20,7 @@
   font-size: 22px;
 }
 
-.headerLinks {
+.headerLinks, .headerLinksLatest {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,8 +40,13 @@
   gap: 7px;
 }
 
-.headerLinksLatest a {
+.headerLinksLatest a:first-child {
   background: #fbe3e1;
+  font-weight: 600;
+}
+
+.headerLinksLatest a:last-child {
+  background: #e6e1fb;
   font-weight: 600;
 }
 
