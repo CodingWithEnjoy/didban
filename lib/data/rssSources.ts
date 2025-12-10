@@ -9,12 +9,6 @@ export const rssSources: RSSSource[] = [
       "https://www.mehrnews.com/resources/theme/mehrnews/img/favicon.ico",
     categories: [
       {
-        id: "all",
-        category: "جدیدترین ها",
-        rssUrl: "https://www.mehrnews.com/rss",
-      },
-
-      {
         id: "art",
         category: "هنر",
         rssUrl: "https://www.mehrnews.com/rss/tp/1",
@@ -42,11 +36,6 @@ export const rssSources: RSSSource[] = [
     websiteUrl: "https://www.tasnimnews.com",
     iconUrl: "https://www.tasnimnews.com/favicon.ico",
     categories: [
-      {
-        id: "all",
-        category: "جدیدترین ها",
-        rssUrl: "https://www.tasnimnews.com/fa/rss/feed/0/0/8/1/TopStories",
-      },
       {
         id: "economic",
         category: "اقتصاد",
@@ -106,11 +95,6 @@ export const rssSources: RSSSource[] = [
     iconUrl:
       "https://www.irna.ir/resources/theme/irna/img/icons/apple-touch-icon-152x152.png",
     categories: [
-      {
-        id: "all",
-        category: "جدیدترین ها",
-        rssUrl: "https://www.irna.ir/rss",
-      },
       {
         id: "economic",
         category: "اقتصاد",
@@ -255,11 +239,6 @@ export const rssSources: RSSSource[] = [
     iconUrl: "https://www.asriran.com/client/themes/fa/main/img/favicon.ico",
     categories: [
       {
-        id: "all",
-        category: "جدیدترین ها",
-        rssUrl: "https://www.asriran.com/fa/rss/allnews",
-      },
-      {
         id: "economic",
         category: "اقتصاد",
         rssUrl: "https://www.asriran.com/fa/rss/1/4",
@@ -274,18 +253,38 @@ export const rssSources: RSSSource[] = [
         category: "ورزشی",
         rssUrl: "https://www.asriran.com/fa/rss/1/6",
       },
+      {
+        id: "tech",
+        category: "تکنولوژی",
+        rssUrl: "https://www.asriran.com/fa/rss/1/14",
+      },
     ],
   },
   {
     name: "eghtesadonline",
     displayName: "اقتصاد آنلاین",
     websiteUrl: "https://www.eghtesadonline.com",
-    iconUrl: "https://www.eghtesadonline.com/client/themes/fa/main/img/favicon.ico",
+    iconUrl:
+      "https://www.eghtesadonline.com/client/themes/fa/main/img/favicon.ico",
     categories: [
       {
         id: "all",
         category: "جدیدترین ها",
         rssUrl: "https://www.eghtesadonline.com/fa/updates/allnews",
+      },
+    ],
+  },
+  {
+    name: "digiato",
+    displayName: "دیجیاتو",
+    websiteUrl: "https://digiato.com",
+    iconUrl:
+      "https://static.digiato.com/digiato/2022/07/DigiatoVectorLogo.png.webp",
+    categories: [
+      {
+        id: "tech",
+        category: "تکنولوژی",
+        rssUrl: "https://digiato.com/feed",
       },
     ],
   },

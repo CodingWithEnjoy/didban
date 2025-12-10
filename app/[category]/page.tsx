@@ -150,11 +150,7 @@ export default function CategoryPage() {
             {item.coverImage && (
               <div className={styles.newsImage}>
                 <a href={item.link} target="_blank" rel="noopener noreferrer">
-                  <img
-                    src={item.coverImage}
-                    alt={item.title}
-                    style={{ objectFit: "cover" }}
-                  />
+                  <img src={item.coverImage} alt={item.title} />
                 </a>
               </div>
             )}

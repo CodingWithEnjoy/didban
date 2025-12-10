@@ -26,7 +26,7 @@ export default function Header() {
           </Link>
 
           <Link href="/closure">
-            تعطیلی{" "}
+            تعطیلی
             <EmojiProvider data={emojiData}>
               <Emoji name="factory" width={16} />
             </EmojiProvider>
@@ -68,6 +68,13 @@ export default function Header() {
             سلامت
             <EmojiProvider data={emojiData}>
               <Emoji name="red-apple" width={16} />
+            </EmojiProvider>
+          </Link>
+
+          <Link href="/tech">
+            تکنولوژی
+            <EmojiProvider data={emojiData}>
+              <Emoji name="robot" width={16} />
             </EmojiProvider>
           </Link>
         </div>

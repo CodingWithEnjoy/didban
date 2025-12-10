@@ -2,21 +2,22 @@ import { NextResponse } from "next/server";
 import Parser from "rss-parser";
 import { rssSources } from "@/lib/data/rssSources";
 
-const CACHE_DURATION = 1000 * 60;
-let cachedData: any = null;
-let lastFetch = 0;
-
 const concurrencyLimit = 5;
-async function asyncPool(tasks: any[]) {
+
+async function asyncPool(tasks: (() => Promise<any>)[]) {
   const results: any[] = [];
   const executing: Promise<any>[] = [];
 
   for (const task of tasks) {
-    const p = task().then((res: any) => results.push(res));
+    const p = task().then((res) => results.push(res));
     executing.push(p);
+
     if (executing.length >= concurrencyLimit) {
       await Promise.race(executing);
-      executing.splice(executing.indexOf(p), 1);
+      executing.splice(
+        executing.findIndex((e) => e === p),
+        1
+      );
     }
   }
 
@@ -26,12 +27,16 @@ async function asyncPool(tasks: any[]) {
 
 const parser = new Parser({
   customFields: {
-    item: ["media:content", "enclosure"],
+    item: [
+      "media:content",
+      "enclosure",
+      ["image", "image"],
+      ["image.url", "imageUrl"], // Support <image><url>
+    ],
   },
 });
 
 export async function GET(req: Request) {
-  const now = Date.now();
   const { searchParams } = new URL(req.url);
 
   const keywordParam = searchParams.get("keyword");
@@ -43,41 +48,19 @@ export async function GET(req: Request) {
 
   const needsFiltering = keywords.length > 0;
 
-  if (!needsFiltering && cachedData && now - lastFetch < CACHE_DURATION) {
-    return NextResponse.json(cachedData);
-  }
-
-  if (needsFiltering && cachedData) {
-    let filtered = cachedData.news.filter((item: any) =>
-      keywords.some(
-        (kw) =>
-          item.title?.toLowerCase().includes(kw) ||
-          item.content?.toLowerCase().includes(kw)
-      )
-    );
-
-    if (limit) filtered = filtered.slice(0, limit);
-
-    return NextResponse.json({
-      success: true,
-      totalNews: filtered.length,
-      news: filtered,
-    });
-  }
-
   try {
     const feedTasks = rssSources.flatMap((agency) =>
       agency.categories.map((cat) => async () => {
         try {
           const feed = await parser.parseURL(cat.rssUrl);
 
-          const items =
+          return (
             feed.items?.map((item) => {
-              let coverImage = (item["media:content"] as any)?.url;
-
-              if (!coverImage && item.enclosure) {
-                coverImage = (item.enclosure as any).url;
-              }
+              let coverImage =
+                (item["media:content"] as any)?.url ||
+                (item.enclosure as any)?.url ||
+                item.imageUrl || // NEW support for <image><url>
+                null;
 
               if (!coverImage && item.content) {
                 const match = /<img.*?src="(.*?)"/.exec(item.content);
@@ -93,11 +76,10 @@ export async function GET(req: Request) {
                 agencyDisplay: agency.displayName,
                 categoryId: cat.id,
                 categoryName: cat.category,
-                coverImage: coverImage || null,
+                coverImage,
               };
-            }) ?? [];
-
-          return items;
+            }) ?? []
+          );
         } catch {
           return [];
         }
@@ -107,23 +89,16 @@ export async function GET(req: Request) {
     const merged = await asyncPool(feedTasks);
     merged.sort((a, b) => b.pubDate - a.pubDate);
 
-    cachedData = {
-      success: true,
-      totalNews: merged.length,
-      news: merged,
-    };
-    lastFetch = now;
-
     let output = merged;
 
     if (needsFiltering) {
-      output = merged.filter((item) =>
-        keywords.some(
-          (kw) =>
-            item.title?.toLowerCase().includes(kw) ||
-            item.content?.toLowerCase().includes(kw)
-        )
-      );
+      output = merged.filter((item) => {
+        const title = item.title?.toLowerCase() || "";
+        const content = item.content?.toLowerCase() || "";
+        return keywords.some(
+          (kw) => title.includes(kw) || content.includes(kw)
+        );
+      });
     }
 
     if (limit) output = output.slice(0, limit);

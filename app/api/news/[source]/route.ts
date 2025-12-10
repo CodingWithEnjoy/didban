@@ -2,9 +2,37 @@ import { NextResponse } from "next/server";
 import Parser from "rss-parser";
 import { rssSources } from "@/lib/data/rssSources";
 
+const concurrencyLimit = 5;
+
+async function asyncPool(tasks: (() => Promise<any>)[]) {
+  const results: any[] = [];
+  const executing: Promise<any>[] = [];
+
+  for (const task of tasks) {
+    const p = task().then((res) => results.push(res));
+    executing.push(p);
+
+    if (executing.length >= concurrencyLimit) {
+      await Promise.race(executing);
+      executing.splice(
+        executing.findIndex((e) => e === p),
+        1
+      );
+    }
+  }
+
+  await Promise.all(executing);
+  return results.flat();
+}
+
 const parser = new Parser({
   customFields: {
-    item: ["media:content", "enclosure"],
+    item: [
+      "media:content",
+      "enclosure",
+      ["image", "image"],
+      ["image.url", "imageUrl"], // NEW support for <image><url>
+    ],
   },
 });
 
@@ -24,20 +52,20 @@ export async function GET(
     );
   }
 
-  const allCategories = site.categories;
+  const tasks: (() => Promise<any[]>)[] = [];
 
-  const results = await Promise.all(
-    allCategories.map(async (cat) => {
+  for (const cat of site.categories) {
+    tasks.push(async () => {
       try {
         const feed = await parser.parseURL(cat.rssUrl);
 
-        const items =
+        return (
           feed.items?.map((item) => {
-            let coverImage = (item["media:content"] as any)?.url;
-
-            if (!coverImage && item.enclosure) {
-              coverImage = (item.enclosure as any).url;
-            }
+            let coverImage =
+              (item["media:content"] as any)?.url ||
+              (item.enclosure as any)?.url ||
+              item.imageUrl || // NEW
+              null;
 
             if (!coverImage && item.content) {
               const match = /<img.*?src="(.*?)"/.exec(item.content);
@@ -51,19 +79,19 @@ export async function GET(
               pubDate: item.pubDate ? new Date(item.pubDate).getTime() : 0,
               categoryId: cat.id,
               categoryName: cat.category,
-              coverImage: coverImage || null, // NEW FIELD
+              coverImage,
             };
-          }) ?? [];
-
-        return items;
+          }) ?? []
+        );
       } catch (err) {
         console.error("RSS fetch error for:", cat.id, err);
         return [];
       }
-    })
-  );
+    });
+  }
 
-  const merged = results.flat();
+  // Run tasks with concurrency limit
+  const merged = await asyncPool(tasks);
 
   // Sort newest → oldest
   merged.sort((a, b) => b.pubDate - a.pubDate);
