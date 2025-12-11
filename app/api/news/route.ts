@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Parser from "rss-parser";
 import { rssSources } from "@/lib/data/rssSources";
+import { XMLBuilder } from "fast-xml-parser"; // lightweight XML builder
 
 const concurrencyLimit = 5;
 
@@ -40,6 +41,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
   const keywordParam = searchParams.get("keyword");
+  const rssMode = searchParams.has("rss");
   const limit = Number(searchParams.get("limit") || 0);
 
   const keywords = keywordParam
@@ -59,7 +61,7 @@ export async function GET(req: Request) {
               let coverImage =
                 (item["media:content"] as any)?.url ||
                 (item.enclosure as any)?.url ||
-                item.imageUrl || // NEW support for <image><url>
+                item.imageUrl ||
                 null;
 
               if (!coverImage && item.content) {
@@ -70,8 +72,10 @@ export async function GET(req: Request) {
               return {
                 title: item.title,
                 link: item.link,
-                content: item.contentSnippet,
-                pubDate: item.pubDate ? new Date(item.pubDate).getTime() : 0,
+                content: item.contentSnippet || item.content,
+                pubDate: item.pubDate
+                  ? new Date(item.pubDate).toUTCString()
+                  : new Date().toUTCString(),
                 agency: agency.name,
                 agencyDisplay: agency.displayName,
                 categoryId: cat.id,
@@ -87,7 +91,9 @@ export async function GET(req: Request) {
     );
 
     const merged = await asyncPool(feedTasks);
-    merged.sort((a, b) => b.pubDate - a.pubDate);
+    merged.sort(
+      (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
+    );
 
     let output = merged;
 
@@ -103,12 +109,45 @@ export async function GET(req: Request) {
 
     if (limit) output = output.slice(0, limit);
 
+    if (rssMode) {
+      // Build RSS XML
+      const builder = new XMLBuilder({ ignoreAttributes: false, format: true });
+      const rssObj = {
+        rss: {
+          "@_version": "2.0",
+          channel: {
+            title: "Custom News Feed",
+            link: req.url,
+            description: "Aggregated RSS Feed",
+            item: output.map((item) => ({
+              title: item.title,
+              link: item.link,
+              description: item.content,
+              pubDate: item.pubDate,
+              enclosure: item.coverImage
+                ? { "@_url": item.coverImage }
+                : undefined,
+            })),
+          },
+        },
+      };
+
+      const rssXml = builder.build(rssObj);
+      return new Response(rssXml, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/rss+xml; charset=utf-8",
+        },
+      });
+    }
+
     return NextResponse.json({
       success: true,
       totalNews: output.length,
       news: output,
     });
-  } catch {
+  } catch (err) {
+    console.error(err);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
