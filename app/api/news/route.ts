@@ -48,8 +48,10 @@ const parser = new Parser({
 function normalizeText(text = "") {
   return text
     .toLowerCase()
-    .replace(/<[^>]+>/g, " ") // remove HTML
-    .replace(/[^\p{L}\p{N}\s]/gu, " ") // keep ALL unicode letters & numbers
+    .replace(/[ي]/g, "ی")
+    .replace(/[ك]/g, "ک")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -65,14 +67,14 @@ export async function GET(req: Request) {
   const limit = Number(searchParams.get("limit") || 0);
 
   const keywords = keywordParam
-    ? keywordParam.split(",").map((k) => k.trim().toLowerCase())
+    ? keywordParam.split(",").map((k) => normalizeText(k))
     : [];
 
   const needsFiltering = keywords.length > 0;
 
   try {
     /* ---------------------------------- */
-    /* Fetch All Feeds */
+    /* Fetch Feeds */
     /* ---------------------------------- */
     const feedTasks = rssSources.flatMap((agency) =>
       agency.categories.map((cat) => async () => {
@@ -81,7 +83,6 @@ export async function GET(req: Request) {
 
           return (
             feed.items?.map((item: any) => {
-              /* ---------- Image ---------- */
               let coverImage =
                 item["media:content"]?.url ||
                 item.enclosure?.url ||
@@ -94,7 +95,6 @@ export async function GET(req: Request) {
                 if (match) coverImage = match[1];
               }
 
-              /* ---------- Content ---------- */
               const fullContent =
                 item["content:encoded"] ||
                 item.content ||
@@ -125,33 +125,26 @@ export async function GET(req: Request) {
 
     let merged = await asyncPool(feedTasks);
 
-    /* ---------------------------------- */
-    /* Sort by Date */
-    /* ---------------------------------- */
     merged.sort(
       (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
     );
 
     /* ---------------------------------- */
-    /* Keyword Filtering */
+    /* Keyword Filter */
     /* ---------------------------------- */
     let output = merged;
 
     if (needsFiltering) {
       output = merged.filter((item) => {
         const haystack = normalizeText(`${item.title} ${item.content}`);
-
         return keywords.some((kw) => haystack.includes(kw));
       });
     }
 
-    /* ---------------------------------- */
-    /* Limit */
-    /* ---------------------------------- */
     if (limit) output = output.slice(0, limit);
 
     /* ---------------------------------- */
-    /* RSS Output Mode */
+    /* RSS MODE */
     /* ---------------------------------- */
     if (rssMode) {
       const builder = new XMLBuilder({
@@ -162,14 +155,23 @@ export async function GET(req: Request) {
       const rssObj = {
         rss: {
           "@_version": "2.0",
+          "@_xmlns:content": "http://purl.org/rss/1.0/modules/content/",
           channel: {
-            title: "Custom News Feed",
+            title: keywordParam
+              ? `News about ${keywordParam}`
+              : "Custom News Feed",
             link: req.url,
-            description: "Aggregated RSS Feed",
+            description: "Aggregated & filtered RSS feed",
+            language: "fa",
             item: output.map((item) => ({
               title: item.title,
               link: item.link,
-              description: item.content,
+              description: {
+                "#cdata": item.content,
+              },
+              "content:encoded": {
+                "#cdata": item.content,
+              },
               pubDate: item.pubDate,
               enclosure: item.coverImage
                 ? { "@_url": item.coverImage }
@@ -189,7 +191,7 @@ export async function GET(req: Request) {
     }
 
     /* ---------------------------------- */
-    /* JSON Output */
+    /* JSON MODE */
     /* ---------------------------------- */
     return NextResponse.json({
       success: true,
