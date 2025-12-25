@@ -341,4 +341,17 @@ export const rssSources: RSSSource[] = [
       },
     ],
   },
+  {
+    name: "shahraranews",
+    displayName: "شهرآرا نیوز",
+    websiteUrl: "https://shahraranews.ir",
+    iconUrl: "",
+    categories: [
+      {
+        id: "all",
+        category: "جدیدترین ها",
+        rssUrl: "https://shahraranews.ir/fa/rss/allnews",
+      },
+    ],
+  },
 ];
