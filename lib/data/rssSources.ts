@@ -345,12 +345,25 @@ export const rssSources: RSSSource[] = [
     name: "shahraranews",
     displayName: "شهرآرا نیوز",
     websiteUrl: "https://shahraranews.ir",
-    iconUrl: "",
+    iconUrl: "https://shahraranews.ir/client/themes/fa/main/img/favicon.ico",
     categories: [
       {
         id: "all",
         category: "جدیدترین ها",
         rssUrl: "https://shahraranews.ir/fa/rss/allnews",
+      },
+    ],
+  },
+  {
+    name: "iribnews",
+    displayName: "خبرگزاری صدا و سیما",
+    websiteUrl: "https://iribnews.ir",
+    iconUrl: "https://www.iribnews.ir/client/themes/fa/main/img/favicon.ico",
+    categories: [
+      {
+        id: "all",
+        category: "جدیدترین ها",
+        rssUrl: "https://www.iribnews.ir/fa/rss/allnews",
       },
     ],
   },
