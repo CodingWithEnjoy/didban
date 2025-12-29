@@ -125,15 +125,23 @@ export default function Home() {
     return `${persianWeekDay} ${dayPersian} ${month}`;
   };
 
-  const getRelativeTime = (timestamp: number) => {
-    const now = Date.now();
-    const diff = now - timestamp; // in milliseconds
+  const getRelativeTime = (pubDate: string | number) => {
+    const time = new Date(pubDate).getTime();
+
+    if (isNaN(time)) return "نامشخص";
+
+    if (isNaN(time)) return "نامشخص";
+
+    const diff = Date.now() - time;
+
+    if (diff < 0) return "لحظاتی قبل";
+
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (seconds < 60) return `چند ثانیه قبل`;
+    if (seconds < 60) return "چند ثانیه قبل";
     if (minutes < 60) return `${minutes} دقیقه قبل`;
     if (hours < 24) return `${hours} ساعت قبل`;
     return `${days} روز قبل`;
@@ -168,6 +176,10 @@ export default function Home() {
     if (aqi <= 200) return "#dc2626"; // Red - Unhealthy
     if (aqi <= 300) return "#9333ea"; // Purple - Very Unhealthy
     return "#7f1d1d"; // Maroon - Hazardous
+  };
+
+  const stripImagesFromHtml = (html: string) => {
+    return html.replace(/<img[^>]*>/gi, "");
   };
 
   return (
@@ -305,7 +317,11 @@ export default function Home() {
                   {item.agencyDisplay} | {getRelativeTime(item.pubDate)}
                 </span>
 
-                <p>{item.content}</p>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: stripImagesFromHtml(item.content),
+                  }}
+                />
               </div>
             </div>
           ))}

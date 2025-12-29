@@ -1,41 +1,57 @@
 import { NextResponse } from "next/server";
 import Parser from "rss-parser";
 import { rssSources } from "@/lib/data/rssSources";
-import { XMLBuilder } from "fast-xml-parser"; // lightweight XML builder
+import { XMLBuilder } from "fast-xml-parser";
 
 const concurrencyLimit = 5;
 
-async function asyncPool(tasks: (() => Promise<any>)[]) {
-  const results: any[] = [];
-  const executing: Promise<any>[] = [];
+async function asyncPool<T>(tasks: (() => Promise<T[]>)[]) {
+  const results: T[] = [];
+  const executing = new Set<Promise<void>>();
 
   for (const task of tasks) {
-    const p = task().then((res) => results.push(res));
-    executing.push(p);
+    const p = task().then((res) => {
+      results.push(...res);
+    });
 
-    if (executing.length >= concurrencyLimit) {
+    executing.add(p);
+    p.finally(() => executing.delete(p));
+
+    if (executing.size >= concurrencyLimit) {
       await Promise.race(executing);
-      executing.splice(
-        executing.findIndex((e) => e === p),
-        1
-      );
     }
   }
 
   await Promise.all(executing);
-  return results.flat();
+  return results;
 }
 
 const parser = new Parser({
+  headers: {
+    "User-Agent": "Mozilla/5.0 (compatible; NewsAggregator/1.0)",
+  },
   customFields: {
     item: [
       "media:content",
       "enclosure",
+      "content:encoded",
+      "summary",
       ["image", "image"],
-      ["image.url", "imageUrl"], // Support <image><url>
+      ["image.url", "imageUrl"],
     ],
   },
 });
+
+function normalizeText(text = "") {
+  return text
+    .toLowerCase()
+    .replace(/[ي]/g, "ی")
+    .replace(/[ك]/g, "ک")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -45,7 +61,7 @@ export async function GET(req: Request) {
   const limit = Number(searchParams.get("limit") || 0);
 
   const keywords = keywordParam
-    ? keywordParam.split(",").map((k) => k.trim().toLowerCase())
+    ? keywordParam.split(",").map((k) => normalizeText(k))
     : [];
 
   const needsFiltering = keywords.length > 0;
@@ -56,73 +72,95 @@ export async function GET(req: Request) {
         try {
           const feed = await parser.parseURL(cat.rssUrl);
 
-          return (
-            feed.items?.map((item) => {
-              let coverImage =
-                (item["media:content"] as any)?.url ||
-                (item.enclosure as any)?.url ||
-                item.imageUrl ||
-                null;
+          if (!Array.isArray(feed.items)) return [];
 
-              if (!coverImage && item.content) {
-                const match = /<img.*?src="(.*?)"/.exec(item.content);
-                if (match) coverImage = match[1];
-              }
+          return feed.items.map((item: any) => {
+            let coverImage =
+              item["media:content"]?.url ||
+              item.enclosure?.url ||
+              item.imageUrl ||
+              null;
 
-              return {
-                title: item.title,
-                link: item.link,
-                content: item.contentSnippet || item.content,
-                pubDate: item.pubDate
-                  ? new Date(item.pubDate).toUTCString()
-                  : new Date().toUTCString(),
-                agency: agency.name,
-                agencyDisplay: agency.displayName,
-                categoryId: cat.id,
-                categoryName: cat.category,
-                coverImage,
-              };
-            }) ?? []
-          );
-        } catch {
+            if (!coverImage) {
+              const html = item["content:encoded"] || item.content || "";
+              const match = /<img[^>]+src=["']([^"']+)["']/i.exec(html);
+              if (match) coverImage = match[1];
+            }
+
+            const fullContent =
+              item["content:encoded"] ||
+              item.content ||
+              item.contentSnippet ||
+              item.summary ||
+              "";
+
+            return {
+              title: item.title || "",
+              link: item.link || "",
+              content: fullContent,
+              pubDate: item.pubDate
+                ? new Date(item.pubDate).toUTCString()
+                : new Date().toUTCString(),
+              agency: agency.name,
+              agencyDisplay: agency.displayName,
+              categoryId: cat.id,
+              categoryName: cat.category,
+              coverImage,
+            };
+          });
+        } catch (err) {
+          console.error("RSS error:", cat.rssUrl, err);
           return [];
         }
       })
     );
 
-    const merged = await asyncPool(feedTasks);
+    let merged = await asyncPool(feedTasks);
+
     merged.sort(
       (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
     );
+
+    const seen = new Set<string>();
+    merged = merged.filter((item) => {
+      if (!item.link || seen.has(item.link)) return false;
+      seen.add(item.link);
+      return true;
+    });
 
     let output = merged;
 
     if (needsFiltering) {
       output = merged.filter((item) => {
-        const title = item.title?.toLowerCase() || "";
-        const content = item.content?.toLowerCase() || "";
-        return keywords.some(
-          (kw) => title.includes(kw) || content.includes(kw)
-        );
+        const haystack = normalizeText(`${item.title} ${item.content}`);
+        return keywords.some((kw) => haystack.includes(kw));
       });
     }
 
     if (limit) output = output.slice(0, limit);
 
     if (rssMode) {
-      // Build RSS XML
-      const builder = new XMLBuilder({ ignoreAttributes: false, format: true });
+      const builder = new XMLBuilder({
+        ignoreAttributes: false,
+        format: true,
+      });
+
       const rssObj = {
         rss: {
           "@_version": "2.0",
+          "@_xmlns:content": "http://purl.org/rss/1.0/modules/content/",
           channel: {
-            title: "Custom News Feed",
+            title: keywordParam
+              ? `News about ${keywordParam}`
+              : "Custom News Feed",
             link: req.url,
             description: "Aggregated RSS Feed",
+            language: "fa",
             item: output.map((item) => ({
               title: item.title,
               link: item.link,
-              description: item.content,
+              description: { "#cdata": item.content },
+              "content:encoded": { "#cdata": item.content },
               pubDate: item.pubDate,
               enclosure: item.coverImage
                 ? { "@_url": item.coverImage }
@@ -133,6 +171,7 @@ export async function GET(req: Request) {
       };
 
       const rssXml = builder.build(rssObj);
+
       return new Response(rssXml, {
         status: 200,
         headers: {

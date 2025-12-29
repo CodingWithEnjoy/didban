@@ -288,4 +288,83 @@ export const rssSources: RSSSource[] = [
       },
     ],
   },
+  {
+    name: "jomhor",
+    displayName: "خبرگزاری جمهور",
+    websiteUrl: "https://www.jomhornews.com",
+    iconUrl: "https://www.jomhornews.com/favicon.ico",
+    categories: [
+      {
+        id: "all",
+        category: "جدیدترین ها",
+        rssUrl:
+          "https://www.jomhornews.com/rssb5.-er48r6--4qhfle2m.puirug.r.xml",
+      },
+    ],
+  },
+  {
+    name: "shararanews",
+    displayName: "شهرآرا نیوز",
+    websiteUrl: "https://shahraranews.ir",
+    iconUrl: "https://shahraranews.ir/client/themes/fa/main/img/favicon.ico",
+    categories: [
+      {
+        id: "all",
+        category: "جدیدترین ها",
+        rssUrl: "https://shahraranews.ir/fa/rss/allnews",
+      },
+    ],
+  },
+  {
+    name: "tabnak",
+    displayName: "تابناک",
+    websiteUrl: "https://www.tabnak.ir",
+    iconUrl: "https://www.tabnak.ir/client/themes/fa/main/img/favicon.ico",
+    categories: [
+      {
+        id: "all",
+        category: "جدیدترین ها",
+        rssUrl: "https://www.tabnak.ir/fa/rss/allnews",
+      },
+    ],
+  },
+  {
+    name: "abrareghtesadi",
+    displayName: "ابرار اقتصادی",
+    websiteUrl: "https://abrareghtesadi.ir",
+    iconUrl: "",
+    categories: [
+      {
+        id: "all",
+        category: "جدیدترین ها",
+        rssUrl: "https://abrareghtesadi.ir/feed/",
+      },
+    ],
+  },
+  {
+    name: "shahraranews",
+    displayName: "شهرآرا نیوز",
+    websiteUrl: "https://shahraranews.ir",
+    iconUrl: "https://shahraranews.ir/client/themes/fa/main/img/favicon.ico",
+    categories: [
+      {
+        id: "all",
+        category: "جدیدترین ها",
+        rssUrl: "https://shahraranews.ir/fa/rss/allnews",
+      },
+    ],
+  },
+  {
+    name: "iribnews",
+    displayName: "خبرگزاری صدا و سیما",
+    websiteUrl: "https://iribnews.ir",
+    iconUrl: "https://www.iribnews.ir/client/themes/fa/main/img/favicon.ico",
+    categories: [
+      {
+        id: "all",
+        category: "جدیدترین ها",
+        rssUrl: "https://www.iribnews.ir/fa/rss/allnews",
+      },
+    ],
+  },
 ];
