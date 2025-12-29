@@ -3,32 +3,9 @@ import Parser from "rss-parser";
 import { rssSources } from "@/lib/data/rssSources";
 import { XMLBuilder } from "fast-xml-parser";
 
-const concurrencyLimit = 5;
-
-async function asyncPool<T>(tasks: (() => Promise<T[]>)[]) {
-  const results: T[] = [];
-  const executing = new Set<Promise<void>>();
-
-  for (const task of tasks) {
-    const p = task().then((res) => {
-      results.push(...res);
-    });
-
-    executing.add(p);
-    p.finally(() => executing.delete(p));
-
-    if (executing.size >= concurrencyLimit) {
-      await Promise.race(executing);
-    }
-  }
-
-  await Promise.all(executing);
-  return results;
-}
-
 const parser = new Parser({
   headers: {
-    "User-Agent": "Mozilla/5.0 (compatible; NewsAggregator/1.0)",
+    "User-Agent": "Mozilla/5.0 (compatible; NewsAggregator/3.0)",
   },
   customFields: {
     item: [
@@ -53,9 +30,73 @@ function normalizeText(text = "") {
     .trim();
 }
 
+async function fetchWithTimeout(url: string, timeout = 5000) {
+  return new Promise<Response>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("Timeout")), timeout);
+    fetch(url)
+      .then((res) => {
+        clearTimeout(timer);
+        resolve(res);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
+
+async function fetchFeed(cat: any, agency: any) {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const res = await fetchWithTimeout(cat.rssUrl);
+      const text = await res.text();
+      const feed = await parser.parseString(text);
+
+      if (!Array.isArray(feed.items)) return [];
+
+      return feed.items.map((item: any) => {
+        let coverImage =
+          item["media:content"]?.url ||
+          item.enclosure?.url ||
+          item.imageUrl ||
+          null;
+
+        if (!coverImage) {
+          const html = item["content:encoded"] || item.content || "";
+          const match = /<img[^>]+src=["']([^"']+)["']/i.exec(html);
+          if (match) coverImage = match[1];
+        }
+
+        const fullContent =
+          item["content:encoded"] ||
+          item.content ||
+          item.contentSnippet ||
+          item.summary ||
+          "";
+
+        return {
+          title: item.title || "",
+          link: item.link || "",
+          content: fullContent,
+          pubDate: item.pubDate
+            ? new Date(item.pubDate).toUTCString()
+            : new Date().toUTCString(),
+          agency: agency.name,
+          agencyDisplay: agency.displayName,
+          categoryId: cat.id,
+          categoryName: cat.category,
+          coverImage,
+        };
+      });
+    } catch (err) {
+      if (attempt === 2) console.error("RSS error:", cat.rssUrl, err);
+    }
+  }
+  return [];
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-
   const keywordParam = searchParams.get("keyword");
   const rssMode = searchParams.has("rss");
   const limit = Number(searchParams.get("limit") || 0);
@@ -63,73 +104,31 @@ export async function GET(req: Request) {
   const keywords = keywordParam
     ? keywordParam.split(",").map((k) => normalizeText(k))
     : [];
-
   const needsFiltering = keywords.length > 0;
 
   try {
-    const feedTasks = rssSources.flatMap((agency) =>
-      agency.categories.map((cat) => async () => {
-        try {
-          const feed = await parser.parseURL(cat.rssUrl);
-
-          if (!Array.isArray(feed.items)) return [];
-
-          return feed.items.map((item: any) => {
-            let coverImage =
-              item["media:content"]?.url ||
-              item.enclosure?.url ||
-              item.imageUrl ||
-              null;
-
-            if (!coverImage) {
-              const html = item["content:encoded"] || item.content || "";
-              const match = /<img[^>]+src=["']([^"']+)["']/i.exec(html);
-              if (match) coverImage = match[1];
-            }
-
-            const fullContent =
-              item["content:encoded"] ||
-              item.content ||
-              item.contentSnippet ||
-              item.summary ||
-              "";
-
-            return {
-              title: item.title || "",
-              link: item.link || "",
-              content: fullContent,
-              pubDate: item.pubDate
-                ? new Date(item.pubDate).toUTCString()
-                : new Date().toUTCString(),
-              agency: agency.name,
-              agencyDisplay: agency.displayName,
-              categoryId: cat.id,
-              categoryName: cat.category,
-              coverImage,
-            };
-          });
-        } catch (err) {
-          console.error("RSS error:", cat.rssUrl, err);
-          return [];
-        }
-      })
+    const tasks = rssSources.flatMap((agency) =>
+      agency.categories.map((cat) => fetchFeed(cat, agency))
     );
 
-    let merged = await asyncPool(feedTasks);
+    const resultsSettled = await Promise.allSettled(tasks);
+    const results: any[] = [];
+    for (const r of resultsSettled) {
+      if (r.status === "fulfilled") results.push(...r.value);
+    }
 
-    merged.sort(
+    results.sort(
       (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
     );
 
     const seen = new Set<string>();
-    merged = merged.filter((item) => {
+    const merged = results.filter((item) => {
       if (!item.link || seen.has(item.link)) return false;
       seen.add(item.link);
       return true;
     });
 
     let output = merged;
-
     if (needsFiltering) {
       output = merged.filter((item) => {
         const haystack = normalizeText(`${item.title} ${item.content}`);
@@ -140,11 +139,7 @@ export async function GET(req: Request) {
     if (limit) output = output.slice(0, limit);
 
     if (rssMode) {
-      const builder = new XMLBuilder({
-        ignoreAttributes: false,
-        format: true,
-      });
-
+      const builder = new XMLBuilder({ ignoreAttributes: false, format: true });
       const rssObj = {
         rss: {
           "@_version": "2.0",
@@ -171,12 +166,9 @@ export async function GET(req: Request) {
       };
 
       const rssXml = builder.build(rssObj);
-
       return new Response(rssXml, {
         status: 200,
-        headers: {
-          "Content-Type": "application/rss+xml; charset=utf-8",
-        },
+        headers: { "Content-Type": "application/rss+xml; charset=utf-8" },
       });
     }
 

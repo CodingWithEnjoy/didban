@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import jalaali from "jalaali-js";
 import { EmojiProvider, Emoji } from "react-apple-emojis";
 import emojiData from "react-apple-emojis/src/data.json";
 import { X, Phone, Send, Linkedin, Files } from "lucide-react";
@@ -10,16 +11,42 @@ interface NewsItem {
   title: string;
   link: string;
   content: string;
-  pubDate: number;
+  pubDate: string | number;
   agencyDisplay: string;
   coverImage: string | null;
 }
 
+const weekDays = [
+  "شنبه",
+  "یکشنبه",
+  "دوشنبه",
+  "سه‌شنبه",
+  "چهارشنبه",
+  "پنج‌شنبه",
+  "جمعه",
+];
+
+const months = [
+  "فروردین",
+  "اردیبهشت",
+  "خرداد",
+  "تیر",
+  "مرداد",
+  "شهریور",
+  "مهر",
+  "آبان",
+  "آذر",
+  "دی",
+  "بهمن",
+  "اسفند",
+];
+
 export default function ClosureNews() {
   const [news, setNews] = useState<NewsItem[]>([]);
-  const [shareModal, setShareModal] = useState<{ open: boolean; link: string }>(
-    { open: false, link: "" }
-  );
+  const [shareModal, setShareModal] = useState<{ open: boolean; link: string }>({
+    open: false,
+    link: "",
+  });
   const [closing, setClosing] = useState(false);
 
   const closeShareModal = () => {
@@ -39,15 +66,34 @@ export default function ClosureNews() {
       .catch(console.error);
   }, []);
 
-  const getRelativeTime = (timestamp: number) => {
-    const now = Date.now();
-    const diff = now - timestamp;
+  const getShamsiDate = (gregorianDate: string | number) => {
+    const g = new Date(gregorianDate);
+    const j = jalaali.toJalaali(g.getFullYear(), g.getMonth() + 1, g.getDate());
+    const backToGregorian = jalaali.toGregorian(j.jy, j.jm, j.jd);
+    const weekdayIndex = new Date(
+      backToGregorian.gy,
+      backToGregorian.gm - 1,
+      backToGregorian.gd
+    ).getDay();
+    const persianWeekDay = weekDays[(weekdayIndex + 6) % 7];
+    const month = months[j.jm - 1];
+    const dayPersian = j.jd.toLocaleString("fa-IR");
+    return `${persianWeekDay} ${dayPersian} ${month}`;
+  };
+
+  const getRelativeTime = (pubDate: string | number) => {
+    const time = new Date(pubDate).getTime();
+    if (isNaN(time)) return "نامشخص";
+
+    const diff = Date.now() - time;
+    if (diff < 0) return "لحظاتی قبل";
+
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (seconds < 60) return `چند ثانیه قبل`;
+    if (seconds < 60) return "چند ثانیه قبل";
     if (minutes < 60) return `${minutes} دقیقه قبل`;
     if (hours < 24) return `${hours} ساعت قبل`;
     return `${days} روز قبل`;
@@ -59,6 +105,8 @@ export default function ClosureNews() {
     navigator.clipboard.writeText(link);
     alert("لینک کپی شد!");
   };
+
+  const stripImagesFromHtml = (html: string) => html.replace(/<img[^>]*>/gi, "");
 
   return (
     <div className={styles.container}>
@@ -81,7 +129,6 @@ export default function ClosureNews() {
                 </EmojiProvider>
                 خبر
               </span>
-
               <div
                 className={styles.newsShare}
                 onClick={() => openShareModal(item.link)}
@@ -101,7 +148,7 @@ export default function ClosureNews() {
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                  ></path>
+                  />
                 </svg>
               </div>
             </div>
@@ -122,26 +169,18 @@ export default function ClosureNews() {
               <a href={item.link} target="_blank" rel="noopener noreferrer">
                 <h3>{item.title}</h3>
               </a>
-
               <span>
                 {item.agencyDisplay} | {getRelativeTime(item.pubDate)}
               </span>
-
-              <p>{item.content}</p>
+              <div dangerouslySetInnerHTML={{ __html: stripImagesFromHtml(item.content) }} />
             </div>
           </div>
         ))}
       </div>
 
       {shareModal.open && (
-        <div
-          className={`${styles.modalOverlay} ${closing ? styles.fadeOut : ""}`}
-        >
-          <div
-            className={`${styles.modalContent} ${
-              closing ? styles.scaleOut : ""
-            }`}
-          >
+        <div className={`${styles.modalOverlay} ${closing ? styles.fadeOut : ""}`}>
+          <div className={`${styles.modalContent} ${closing ? styles.scaleOut : ""}`}>
             <div className={styles.modalHeader}>
               <button className={styles.closeModal} onClick={closeShareModal}>
                 <X color="#000" width={20} />
@@ -150,50 +189,24 @@ export default function ClosureNews() {
             </div>
 
             <div className={styles.shareButtons}>
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(
-                  shareModal.link
-                )}`}
-                target="_blank"
-              >
+              <a href={`https://wa.me/?text=${encodeURIComponent(shareModal.link)}`} target="_blank">
                 <Phone className={`${styles.shareIcon} ${styles.whatsapp}`} />
                 واتساپ
               </a>
-
-              <a
-                href={`https://t.me/share/url?url=${encodeURIComponent(
-                  shareModal.link
-                )}`}
-                target="_blank"
-              >
+              <a href={`https://t.me/share/url?url=${encodeURIComponent(shareModal.link)}`} target="_blank">
                 <Send className={`${styles.shareIcon} ${styles.telegram}`} />
                 تلگرام
               </a>
-
-              <a
-                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                  shareModal.link
-                )}`}
-                target="_blank"
-              >
-                <Linkedin
-                  className={`${styles.shareIcon} ${styles.linkedin}`}
-                />
+              <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareModal.link)}`} target="_blank">
+                <Linkedin className={`${styles.shareIcon} ${styles.linkedin}`} />
                 لینکدین
               </a>
             </div>
 
             <div className={styles.copyLink}>
               <span>یا لینک زیر رو کپی کن</span>
-
               <div className={styles.linkSection}>
-                <input
-                  dir="ltr"
-                  type="text"
-                  value={decodeURIComponent(shareModal.link)}
-                  readOnly
-                  className={styles.linkInput}
-                />
+                <input dir="ltr" type="text" value={decodeURIComponent(shareModal.link)} readOnly className={styles.linkInput} />
                 <button onClick={() => copyToClipboard(shareModal.link)}>
                   <Files width={20} />
                 </button>
