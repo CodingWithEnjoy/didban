@@ -1,35 +1,35 @@
 import { RSSSource } from "../types/rss";
 
 export const rssSources: RSSSource[] = [
-  {
-    name: "mehrnews",
-    displayName: "مهر",
-    websiteUrl: "https://www.mehrnews.com",
-    iconUrl:
-      "https://www.mehrnews.com/resources/theme/mehrnews/img/favicon.ico",
-    categories: [
-      {
-        id: "art",
-        category: "هنر",
-        rssUrl: "https://www.mehrnews.com/rss/tp/1",
-      },
-      {
-        id: "health",
-        category: "سلامت",
-        rssUrl: "https://www.mehrnews.com/rss/tp/550",
-      },
-      {
-        id: "economic",
-        category: "اقتصاد",
-        rssUrl: "https://www.mehrnews.com/rss/tp/25",
-      },
-      {
-        id: "sports",
-        category: "ورزشی",
-        rssUrl: "https://www.mehrnews.com/rss/tp/9",
-      },
-    ],
-  },
+  // {
+  //   name: "mehrnews",
+  //   displayName: "مهر",
+  //   websiteUrl: "https://www.mehrnews.com",
+  //   iconUrl:
+  //     "https://www.mehrnews.com/resources/theme/mehrnews/img/favicon.ico",
+  //   categories: [
+  //     {
+  //       id: "art",
+  //       category: "هنر",
+  //       rssUrl: "https://www.mehrnews.com/rss/tp/1",
+  //     },
+  //     {
+  //       id: "health",
+  //       category: "سلامت",
+  //       rssUrl: "https://www.mehrnews.com/rss/tp/550",
+  //     },
+  //     {
+  //       id: "economic",
+  //       category: "اقتصاد",
+  //       rssUrl: "https://www.mehrnews.com/rss/tp/25",
+  //     },
+  //     {
+  //       id: "sports",
+  //       category: "ورزشی",
+  //       rssUrl: "https://www.mehrnews.com/rss/tp/9",
+  //     },
+  //   ],
+  // },
   {
     name: "tasnimnews",
     displayName: "تسنیم",
@@ -275,20 +275,6 @@ export const rssSources: RSSSource[] = [
     ],
   },
   {
-    name: "digiato",
-    displayName: "دیجیاتو",
-    websiteUrl: "https://digiato.com",
-    iconUrl:
-      "https://static.digiato.com/digiato/2022/07/DigiatoVectorLogo.png.webp",
-    categories: [
-      {
-        id: "tech",
-        category: "تکنولوژی",
-        rssUrl: "https://digiato.com/feed",
-      },
-    ],
-  },
-  {
     name: "jomhor",
     displayName: "خبرگزاری جمهور",
     websiteUrl: "https://www.jomhornews.com",
@@ -328,19 +314,7 @@ export const rssSources: RSSSource[] = [
       },
     ],
   },
-  {
-    name: "abrareghtesadi",
-    displayName: "ابرار اقتصادی",
-    websiteUrl: "https://abrareghtesadi.ir",
-    iconUrl: "",
-    categories: [
-      {
-        id: "all",
-        category: "جدیدترین ها",
-        rssUrl: "https://abrareghtesadi.ir/feed/",
-      },
-    ],
-  },
+
   {
     name: "shahraranews",
     displayName: "شهرآرا نیوز",

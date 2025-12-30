@@ -2,25 +2,38 @@ import { NextResponse } from "next/server";
 import Parser from "rss-parser";
 import { rssSources } from "@/lib/data/rssSources";
 import { XMLBuilder } from "fast-xml-parser";
+import pLimit from "p-limit";
 
+export const runtime = "nodejs";
+export const revalidate = 60;
+
+/* ---------------- CONFIG ---------------- */
+
+const FETCH_TIMEOUT = 3000;
+const CONCURRENCY = 6;
+const TTL = 60_000;
+
+/* ---------------- GLOBAL ---------------- */
+
+let CACHE: any[] | null = null;
+let CACHE_TIME = 0;
+let IN_FLIGHT: Promise<any[]> | null = null;
+
+/* ---------------- UTILS ---------------- */
+
+const limit = pLimit(CONCURRENCY);
 const parser = new Parser({
   headers: {
     "User-Agent": "Mozilla/5.0 (compatible; NewsAggregator/3.0)",
   },
-  customFields: {
-    item: [
-      "media:content",
-      "enclosure",
-      "content:encoded",
-      "summary",
-      ["image", "image"],
-      ["image.url", "imageUrl"],
-    ],
-  },
 });
 
+const normalizeCache = new Map<string, string>();
 function normalizeText(text = "") {
-  return text
+  let v = normalizeCache.get(text);
+  if (v) return v;
+
+  v = text
     .toLowerCase()
     .replace(/[ي]/g, "ی")
     .replace(/[ك]/g, "ک")
@@ -28,122 +41,160 @@ function normalizeText(text = "") {
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+  normalizeCache.set(text, v);
+  return v;
 }
 
-async function fetchWithTimeout(url: string, timeout = 5000) {
-  return new Promise<Response>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("Timeout")), timeout);
-    fetch(url)
-      .then((res) => {
-        clearTimeout(timer);
-        resolve(res);
-      })
-      .catch((err) => {
-        clearTimeout(timer);
-        reject(err);
-      });
-  });
-}
-
-async function fetchFeed(cat: any, agency: any) {
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const res = await fetchWithTimeout(cat.rssUrl);
-      const text = await res.text();
-      const feed = await parser.parseString(text);
-
-      if (!Array.isArray(feed.items)) return [];
-
-      return feed.items.map((item: any) => {
-        let coverImage =
-          item["media:content"]?.url ||
-          item.enclosure?.url ||
-          item.imageUrl ||
-          null;
-
-        if (!coverImage) {
-          const html = item["content:encoded"] || item.content || "";
-          const match = /<img[^>]+src=["']([^"']+)["']/i.exec(html);
-          if (match) coverImage = match[1];
-        }
-
-        const fullContent =
-          item["content:encoded"] ||
-          item.content ||
-          item.contentSnippet ||
-          item.summary ||
-          "";
-
-        return {
-          title: item.title || "",
-          link: item.link || "",
-          content: fullContent,
-          pubDate: item.pubDate
-            ? new Date(item.pubDate).toUTCString()
-            : new Date().toUTCString(),
-          agency: agency.name,
-          agencyDisplay: agency.displayName,
-          categoryId: cat.id,
-          categoryName: cat.category,
-          coverImage,
-        };
-      });
-    } catch (err) {
-      if (attempt === 2) console.error("RSS error:", cat.rssUrl, err);
-    }
-  }
-  return [];
-}
-
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const keywordParam = searchParams.get("keyword");
-  const rssMode = searchParams.has("rss");
-  const limit = Number(searchParams.get("limit") || 0);
-
-  const keywords = keywordParam
-    ? keywordParam.split(",").map((k) => normalizeText(k))
-    : [];
-  const needsFiltering = keywords.length > 0;
-
+async function fetchFast(url: string) {
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), FETCH_TIMEOUT);
   try {
-    const tasks = rssSources.flatMap((agency) =>
-      agency.categories.map((cat) => fetchFeed(cat, agency))
-    );
+    return await fetch(url, { signal: c.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
 
-    const resultsSettled = await Promise.allSettled(tasks);
+/* ---------------- LOGGING ---------------- */
+
+function logRss(
+  ms: number | null,
+  agency: string,
+  category: string,
+  url: string
+) {
+  if (ms === null) {
+    console.log(`[RSS] FAILED | ${agency} | ${category} | ${url}`);
+  } else {
+    console.log(`[RSS] ${ms}ms | ${agency} | ${category} | ${url}`);
+  }
+}
+
+/* ---------------- CORE ---------------- */
+
+async function buildFeed(): Promise<any[]> {
+  if (CACHE && Date.now() - CACHE_TIME < TTL) return CACHE;
+  if (IN_FLIGHT) return IN_FLIGHT;
+
+  IN_FLIGHT = (async () => {
     const results: any[] = [];
-    for (const r of resultsSettled) {
-      if (r.status === "fulfilled") results.push(...r.value);
+    const seen = new Set<string>();
+    const jobs: Promise<void>[] = [];
+
+    for (let a = 0; a < rssSources.length; a++) {
+      const agency = rssSources[a];
+
+      for (let c = 0; c < agency.categories.length; c++) {
+        const cat = agency.categories[c];
+
+        jobs.push(
+          limit(async () => {
+            const start = Date.now();
+
+            try {
+              const res = await fetchFast(cat.rssUrl);
+              if (!res.ok) throw 0;
+
+              const xml = await res.text();
+              if (!xml) throw 0;
+
+              const feed = await parser.parseString(xml);
+              logRss(Date.now() - start, agency.name, cat.category, cat.rssUrl);
+
+              const items = feed.items;
+              if (!items) return;
+
+              for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const link = item?.link;
+                if (!link || seen.has(link)) continue;
+                seen.add(link);
+
+                const content =
+                  item["content:encoded"] || item.content || item.summary || "";
+
+                let cover =
+                  item["media:content"]?.url ||
+                  item.enclosure?.url ||
+                  item.imageUrl ||
+                  null;
+
+                if (!cover && content.indexOf("<img") !== -1) {
+                  const m = /<img[^>]+src=["']([^"']+)["']/i.exec(content);
+                  if (m) cover = m[1];
+                }
+
+                results.push({
+                  title: item.title || "",
+                  link,
+                  content,
+                  pubDate: item.pubDate
+                    ? new Date(item.pubDate).toUTCString()
+                    : new Date().toUTCString(),
+                  agency: agency.name,
+                  agencyDisplay: agency.displayName,
+                  categoryId: cat.id,
+                  categoryName: cat.category,
+                  coverImage: cover,
+                });
+              }
+            } catch {
+              logRss(null, agency.name, cat.category, cat.rssUrl);
+            }
+          })
+        );
+      }
     }
+
+    await Promise.all(jobs);
 
     results.sort(
       (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
     );
 
-    const seen = new Set<string>();
-    const merged = results.filter((item) => {
-      if (!item.link || seen.has(item.link)) return false;
-      seen.add(item.link);
-      return true;
+    CACHE = results;
+    CACHE_TIME = Date.now();
+    IN_FLIGHT = null;
+
+    return results;
+  })();
+
+  return IN_FLIGHT;
+}
+
+/* ---------------- API ---------------- */
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const keywordParam = searchParams.get("keyword");
+  const rssMode = searchParams.has("rss");
+  const limitParam = Number(searchParams.get("limit") || 0);
+
+  const keywords = keywordParam
+    ? keywordParam.split(",").map(normalizeText)
+    : [];
+
+  let data = await buildFeed();
+
+  if (keywords.length) {
+    data = data.filter((item) => {
+      const t = normalizeText(item.title + " " + item.content);
+      for (let i = 0; i < keywords.length; i++) {
+        if (t.includes(keywords[i])) return true;
+      }
+      return false;
     });
+  }
 
-    let output = merged;
-    if (needsFiltering) {
-      output = merged.filter((item) => {
-        const haystack = normalizeText(`${item.title} ${item.content}`);
-        return keywords.some((kw) => haystack.includes(kw));
-      });
-    }
+  if (limitParam) data = data.slice(0, limitParam);
 
-    if (limit) output = output.slice(0, limit);
-
-    if (rssMode) {
-      const builder = new XMLBuilder({ ignoreAttributes: false, format: true });
-      const rssObj = {
+  if (rssMode) {
+    const builder = new XMLBuilder({ ignoreAttributes: false });
+    return new Response(
+      builder.build({
         rss: {
           "@_version": "2.0",
-          "@_xmlns:content": "http://purl.org/rss/1.0/modules/content/",
           channel: {
             title: keywordParam
               ? `News about ${keywordParam}`
@@ -151,37 +202,18 @@ export async function GET(req: Request) {
             link: req.url,
             description: "Aggregated RSS Feed",
             language: "fa",
-            item: output.map((item) => ({
-              title: item.title,
-              link: item.link,
-              description: { "#cdata": item.content },
-              "content:encoded": { "#cdata": item.content },
-              pubDate: item.pubDate,
-              enclosure: item.coverImage
-                ? { "@_url": item.coverImage }
-                : undefined,
-            })),
+            item: data,
           },
         },
-      };
-
-      const rssXml = builder.build(rssObj);
-      return new Response(rssXml, {
-        status: 200,
-        headers: { "Content-Type": "application/rss+xml; charset=utf-8" },
-      });
-    }
-
-    return NextResponse.json({
-      success: true,
-      totalNews: output.length,
-      news: output,
-    });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
+      }),
+      { headers: { "Content-Type": "application/rss+xml; charset=utf-8" } }
     );
   }
+
+  return NextResponse.json({
+    success: true,
+    totalNews: data.length,
+    news: data,
+    cached: true,
+  });
 }
