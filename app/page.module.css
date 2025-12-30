@@ -529,3 +529,52 @@
   justify-content: space-evenly;
   gap: 5px;
 }
+
+.loadMore {
+  background: #fff;
+  border: 1px solid #f2f2f2;
+  border-radius: 20px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 20px 0;
+  display: flex;
+}
+
+@media (max-width: 767px) {
+  .container {
+    width: 100%;
+    margin-top: 0;
+    display: flex;
+  }
+
+  .col {
+    padding: 0;
+  }
+
+  .newsTitle {
+    margin-top: 0;
+  }
+
+  .shareButtons {
+    flex-direction: row;
+    gap: 0;
+    margin: 25px 0;
+  }
+
+  .copyLink {
+    width: 320px;
+  }
+
+  .linkInput {
+    width: unset;
+  }
+
+  .aqiCard,
+  .weatherCard,
+  .financial,
+  .col:nth-child(odd) {
+    display: none;
+  }
+}

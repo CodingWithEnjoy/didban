@@ -1,0 +1,162 @@
+.container {
+  width: 90%;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.financial {
+  border-radius: 20px;
+  border: 1px solid #f2f2f2;
+  background: #ffffff;
+  padding: 0;
+}
+
+.financialTitle {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  padding: 15px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 18px;
+  z-index: 10;
+  border-bottom: 1px solid #f2f2f2;
+  border-radius: 20px 20px 0 0;
+}
+
+.financialRows {
+  height: 350px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  padding: 10px;
+}
+
+.financialRows::-webkit-scrollbar {
+  background: transparent;
+  width: 5px;
+}
+
+.financialRows::-webkit-scrollbar-thumb {
+  background: #f2f2f2;
+  border-radius: 20px;
+}
+
+.financialRows::-webkit-scrollbar-button {
+  visibility: hidden;
+  height: 20px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 40% 20% 40%;
+  align-items: center;
+  padding: 10px;
+}
+
+.price {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.price span {
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.change {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  direction: ltr;
+}
+
+.up {
+  color: green;
+}
+
+.down {
+  color: red;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.converter {
+  padding: 20px;
+  border: 1px solid #f2f2f2;
+  border-radius: 20px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.converter h2 {
+  background: #ffffff;
+  padding-bottom: 15px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 18px;
+  z-index: 10;
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.converterRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.converterRow input,
+.converterRow select {
+  height: 40px;
+  padding: 10px;
+  border-radius: 15px;
+  border: 1px solid #ebebeb;
+  outline: none;
+  flex: 1;
+  transition: 0.3s;
+  text-align: center;
+  background: transparent;
+}
+
+.converterRow select {
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  -ms-appearance: none;
+  -o-appearance: none;
+  appearance: none;
+}
+
+.converterRow input:focus,
+.converterRow select:focus {
+  box-shadow: 0px 0px 0px 2px #d3dfff;
+  outline: none;
+}
+
+.convertButton {
+  padding: 10px;
+  background: #172554;
+  color: #fff;
+  border-radius: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  text-align: center;
+}
+
+.result {
+  text-align: center;
+  font-weight: 600;
+  font-size: 16px;
+}

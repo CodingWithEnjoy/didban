@@ -67,6 +67,7 @@ export default function Home() {
   const [items, setItems] = useState<FinancialItem[]>([]);
   const [weather, setWeather] = useState<WeatherItem | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [visibleCount, setVisibleCount] = useState(50);
   const [shareModal, setShareModal] = useState<{ open: boolean; link: string }>(
     {
       open: false,
@@ -110,6 +111,8 @@ export default function Home() {
       .catch((err) => console.error(err));
   }, []);
 
+  const visibleNews = news.slice(0, visibleCount);
+
   const getShamsiDate = (gregorianDate: string | number) => {
     const g = new Date(gregorianDate);
     const j = jalaali.toJalaali(g.getFullYear(), g.getMonth() + 1, g.getDate());
@@ -127,20 +130,13 @@ export default function Home() {
 
   const getRelativeTime = (pubDate: string | number) => {
     const time = new Date(pubDate).getTime();
-
     if (isNaN(time)) return "نامشخص";
-
-    if (isNaN(time)) return "نامشخص";
-
     const diff = Date.now() - time;
-
     if (diff < 0) return "لحظاتی قبل";
-
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-
     if (seconds < 60) return "چند ثانیه قبل";
     if (minutes < 60) return `${minutes} دقیقه قبل`;
     if (hours < 24) return `${hours} ساعت قبل`;
@@ -170,12 +166,12 @@ export default function Home() {
   };
 
   const getAqiColor = (aqi: number) => {
-    if (aqi <= 50) return "#16a34a"; // Green - Good
-    if (aqi <= 100) return "#eab308"; // Yellow - Moderate
-    if (aqi <= 150) return "#f97316"; // Orange - Unhealthy for sensitive
-    if (aqi <= 200) return "#dc2626"; // Red - Unhealthy
-    if (aqi <= 300) return "#9333ea"; // Purple - Very Unhealthy
-    return "#7f1d1d"; // Maroon - Hazardous
+    if (aqi <= 50) return "#16a34a";
+    if (aqi <= 100) return "#eab308";
+    if (aqi <= 150) return "#f97316";
+    if (aqi <= 200) return "#dc2626";
+    if (aqi <= 300) return "#9333ea";
+    return "#7f1d1d";
   };
 
   const stripImagesFromHtml = (html: string) => {
@@ -208,7 +204,7 @@ export default function Home() {
                       : ""
                   }`}
                 >
-                  {Number(item.change).toLocaleString("fa-IR")}%{" "}
+                  {Number(item.change).toLocaleString("fa-IR")}%
                 </div>
                 <div className={styles.price}>
                   {Number(item.price).toLocaleString("fa-IR")}{" "}
@@ -233,7 +229,7 @@ export default function Home() {
         </div>
 
         <div className={styles.newsList}>
-          {news.map((item, idx) => (
+          {visibleNews.map((item, idx) => (
             <div key={idx} className={styles.newsCard}>
               <div className={styles.newsHeader}>
                 <span
@@ -291,7 +287,7 @@ export default function Home() {
                       strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                    ></path>
+                    />
                   </svg>
                 </div>
               </div>
@@ -299,11 +295,7 @@ export default function Home() {
               {item.coverImage && (
                 <div className={styles.newsImage}>
                   <a href={item.link} target="_blank" rel="noopener noreferrer">
-                    <img
-                      src={item.coverImage}
-                      alt={item.title}
-                      style={{ objectFit: "cover" }}
-                    />
+                    <img src={item.coverImage} alt={item.title} />
                   </a>
                 </div>
               )}
@@ -312,11 +304,9 @@ export default function Home() {
                 <a href={item.link} target="_blank" rel="noopener noreferrer">
                   <h3>{item.title}</h3>
                 </a>
-
                 <span>
                   {item.agencyDisplay} | {getRelativeTime(item.pubDate)}
                 </span>
-
                 <div
                   dangerouslySetInnerHTML={{
                     __html: stripImagesFromHtml(item.content),
@@ -325,6 +315,15 @@ export default function Home() {
               </div>
             </div>
           ))}
+
+          {visibleCount < news.length && (
+            <button
+              className={styles.loadMore}
+              onClick={() => setVisibleCount((v) => v + 50)}
+            >
+              بارگذاری اخبار بیشتر
+            </button>
+          )}
         </div>
       </div>
 
@@ -358,21 +357,17 @@ export default function Home() {
           <div className={styles.aqiCard}>
             <div className={styles.aqiHeader}>
               <h3>شاخص کیفیت هوا</h3>
-
               <p
                 className={styles.aqiValue}
                 style={{ color: getAqiColor(Number(aqi.aqi)) }}
               >
                 {toPersianNumber(aqi.aqi)}
               </p>
-
               <div className={styles.aqiPollutant}>
                 <p> آلاینده اصلی : {aqi.pollutant}</p>
               </div>
             </div>
-
             <div className={styles.aqiDivider}></div>
-
             <div className={styles.aqiFooter}>
               <p>باد: {toPersianNumber(aqi.wind)}</p>
               <p>رطوبت: {toPersianNumber(aqi.humidity)}</p>
@@ -394,7 +389,6 @@ export default function Home() {
               <button className={styles.closeModal} onClick={closeShareModal}>
                 <X color="#000" width={20} />
               </button>
-
               <h3> ارسال با</h3>
             </div>
 
@@ -432,7 +426,6 @@ export default function Home() {
 
             <div className={styles.copyLink}>
               <span>یا لینک زیر رو کپی کن</span>
-
               <div className={styles.linkSection}>
                 <input
                   dir="ltr"
