@@ -10,36 +10,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout the repository
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # Step 2: Setup Node.js (required >=22 for Capacitor 8)
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 25  # Updated Node version
 
+      # Step 3: Install dependencies
       - name: Install dependencies
         run: npm ci
 
+      # Step 4: Build Next.js app
       - name: Build Next app
         run: npm run build
 
+      # Step 5: Sync Capacitor
       - name: Capacitor sync
         run: npx cap sync android
 
+      # Step 6: Setup Java (required for Gradle)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
+      # Step 7: Setup Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      # Step 8: Restore keystore from GitHub Secrets
       - name: Restore keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/didban.keystore
 
+      # Step 9: Grant Gradle execution permissions
+      - name: Make Gradle executable
+        run: chmod +x android/gradlew
+
+      # Step 10: Build signed APK (release)
       - name: Build signed APK
         working-directory: android
         run: |
@@ -49,6 +62,7 @@ jobs:
             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
 
+      # Step 11: Upload APK as artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
