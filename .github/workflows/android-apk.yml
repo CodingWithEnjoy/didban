@@ -10,15 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # Step 2: Setup Node.js (>=22 for Capacitor 8)
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 24  # Stable and cached on GitHub runners
+          node-version: 24
+
+      # Optional: Upgrade npm to latest stable to fix internal bugs
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      # Optional: Clean npm cache to avoid CI corruption
+      - name: Clean npm cache
+        run: npm cache clean --force
 
       # Step 3: Cache npm dependencies
       - name: Cache npm
@@ -29,40 +35,33 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      # Step 4: Install dependencies
+      # Step 4: Install dependencies using safer `npm install`
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
-      # Step 5: Build Next.js app
       - name: Build Next app
         run: npm run build
 
-      # Step 6: Sync Capacitor
       - name: Capacitor sync
         run: npx cap sync android
 
-      # Step 7: Setup Java
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      # Step 8: Setup Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # Step 9: Restore keystore from GitHub Secrets
       - name: Restore keystore
         run: |
           mkdir -p android/app
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/didban.keystore
 
-      # Step 10: Make Gradle executable
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-      # Step 11: Build signed APK (release)
       - name: Build signed APK
         working-directory: android
         run: |
@@ -72,7 +71,6 @@ jobs:
             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
 
-      # Step 12: Upload APK as artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
