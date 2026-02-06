@@ -155,7 +155,7 @@ export default function Home() {
   const [aqi, setAqi] = useState<any>(null);
 
   useEffect(() => {
-    fetch("/api/aqi")
+    fetch("https://corsproxy.io/?url=https://amirmasoud.netlify.app/api/v1/aqi")
       .then((res) => res.json())
       .then((data) => setAqi(data))
       .catch((err) => console.error(err));
@@ -369,8 +369,8 @@ export default function Home() {
             </div>
             <div className={styles.aqiDivider}></div>
             <div className={styles.aqiFooter}>
-              <p>باد: {toPersianNumber(aqi.wind)}</p>
-              <p>رطوبت: {toPersianNumber(aqi.humidity)}</p>
+              <p>باد: {toPersianNumber(aqi.weather.wind)}</p>
+              <p>رطوبت: {toPersianNumber(aqi.weather.humidity)}</p>
             </div>
           </div>
         )}

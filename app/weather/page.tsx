@@ -26,7 +26,7 @@ export default function WeatherPage() {
 
   useEffect(() => {
     fetch(
-      "https://corsproxy.io/?url=https://api.dastyar.io/express/weather?city=Tehran&theme=light"
+      "https://amirmasoud.netlify.app/api/v1/weather?city=Tehran"
     )
       .then((res) => res.json())
       .then((data) => setWeather(data[0]))

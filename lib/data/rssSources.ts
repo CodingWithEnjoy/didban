@@ -1,35 +1,35 @@
 import { RSSSource } from "../types/rss";
 
 export const rssSources: RSSSource[] = [
-  // {
-  //   name: "mehrnews",
-  //   displayName: "مهر",
-  //   websiteUrl: "https://www.mehrnews.com",
-  //   iconUrl:
-  //     "https://www.mehrnews.com/resources/theme/mehrnews/img/favicon.ico",
-  //   categories: [
-  //     {
-  //       id: "art",
-  //       category: "هنر",
-  //       rssUrl: "https://www.mehrnews.com/rss/tp/1",
-  //     },
-  //     {
-  //       id: "health",
-  //       category: "سلامت",
-  //       rssUrl: "https://www.mehrnews.com/rss/tp/550",
-  //     },
-  //     {
-  //       id: "economic",
-  //       category: "اقتصاد",
-  //       rssUrl: "https://www.mehrnews.com/rss/tp/25",
-  //     },
-  //     {
-  //       id: "sports",
-  //       category: "ورزشی",
-  //       rssUrl: "https://www.mehrnews.com/rss/tp/9",
-  //     },
-  //   ],
-  // },
+  {
+    name: "mehrnews",
+    displayName: "مهر",
+    websiteUrl: "https://www.mehrnews.com",
+    iconUrl:
+      "https://www.mehrnews.com/resources/theme/mehrnews/img/favicon.ico",
+    categories: [
+      {
+        id: "art",
+        category: "هنر",
+        rssUrl: "https://www.mehrnews.com/rss/tp/1",
+      },
+      {
+        id: "health",
+        category: "سلامت",
+        rssUrl: "https://www.mehrnews.com/rss/tp/550",
+      },
+      {
+        id: "economic",
+        category: "اقتصاد",
+        rssUrl: "https://www.mehrnews.com/rss/tp/25",
+      },
+      {
+        id: "sports",
+        category: "ورزشی",
+        rssUrl: "https://www.mehrnews.com/rss/tp/9",
+      },
+    ],
+  },
   {
     name: "tasnimnews",
     displayName: "تسنیم",
@@ -107,29 +107,29 @@ export const rssSources: RSSSource[] = [
       },
     ],
   },
-  {
-    name: "aftabnews",
-    displayName: "آفتاب",
-    websiteUrl: "https://aftabnews.ir",
-    iconUrl: "https://aftabnews.ir/client/themes/fa/main/img/favicon.ico",
-    categories: [
-      {
-        id: "art",
-        category: "هنر",
-        rssUrl: "https://aftabnews.ir/fa/rss/3",
-      },
-      {
-        id: "health",
-        category: "سلامت",
-        rssUrl: "https://aftabnews.ir/fa/rss/6",
-      },
-      {
-        id: "sports",
-        category: "ورزشی",
-        rssUrl: "https://aftabnews.ir/fa/rss/8",
-      },
-    ],
-  },
+  // {
+  //   name: "aftabnews",
+  //   displayName: "آفتاب",
+  //   websiteUrl: "https://aftabnews.ir",
+  //   iconUrl: "https://aftabnews.ir/client/themes/fa/main/img/favicon.ico",
+  //   categories: [
+  //     {
+  //       id: "art",
+  //       category: "هنر",
+  //       rssUrl: "https://aftabnews.ir/fa/rss/3",
+  //     },
+  //     {
+  //       id: "health",
+  //       category: "سلامت",
+  //       rssUrl: "https://aftabnews.ir/fa/rss/6",
+  //     },
+  //     {
+  //       id: "sports",
+  //       category: "ورزشی",
+  //       rssUrl: "https://aftabnews.ir/fa/rss/8",
+  //     },
+  //   ],
+  // },
   {
     name: "isna",
     displayName: "ایسنا",
@@ -209,29 +209,29 @@ export const rssSources: RSSSource[] = [
       },
     ],
   },
-  {
-    name: "snn",
-    displayName: "خبرگزاری دانشجو",
-    websiteUrl: "https://snn.ir",
-    iconUrl: "https://snn.ir/client/themes/fa/main/img/favicon-152x152.png",
-    categories: [
-      {
-        id: "economic",
-        category: "اقتصاد",
-        rssUrl: "https://snn.ir/fa/rss/7",
-      },
-      {
-        id: "politics",
-        category: "سیاست",
-        rssUrl: "https://snn.ir/fa/rss/6",
-      },
-      {
-        id: "sports",
-        category: "ورزشی",
-        rssUrl: "https://snn.ir/fa/rss/10",
-      },
-    ],
-  },
+  // {
+  //   name: "snn",
+  //   displayName: "خبرگزاری دانشجو",
+  //   websiteUrl: "https://snn.ir",
+  //   iconUrl: "https://snn.ir/client/themes/fa/main/img/favicon-152x152.png",
+  //   categories: [
+  //     {
+  //       id: "economic",
+  //       category: "اقتصاد",
+  //       rssUrl: "https://snn.ir/fa/rss/7",
+  //     },
+  //     {
+  //       id: "politics",
+  //       category: "سیاست",
+  //       rssUrl: "https://snn.ir/fa/rss/6",
+  //     },
+  //     {
+  //       id: "sports",
+  //       category: "ورزشی",
+  //       rssUrl: "https://snn.ir/fa/rss/10",
+  //     },
+  //   ],
+  // },
   {
     name: "asriran",
     displayName: "عصر ایران",
@@ -274,47 +274,33 @@ export const rssSources: RSSSource[] = [
       },
     ],
   },
-  {
-    name: "jomhor",
-    displayName: "خبرگزاری جمهور",
-    websiteUrl: "https://www.jomhornews.com",
-    iconUrl: "https://www.jomhornews.com/favicon.ico",
-    categories: [
-      {
-        id: "all",
-        category: "جدیدترین ها",
-        rssUrl:
-          "https://www.jomhornews.com/rssb5.-er48r6--4qhfle2m.puirug.r.xml",
-      },
-    ],
-  },
-  {
-    name: "shararanews",
-    displayName: "شهرآرا نیوز",
-    websiteUrl: "https://shahraranews.ir",
-    iconUrl: "https://shahraranews.ir/client/themes/fa/main/img/favicon.ico",
-    categories: [
-      {
-        id: "all",
-        category: "جدیدترین ها",
-        rssUrl: "https://shahraranews.ir/fa/rss/allnews",
-      },
-    ],
-  },
-  {
-    name: "tabnak",
-    displayName: "تابناک",
-    websiteUrl: "https://www.tabnak.ir",
-    iconUrl: "https://www.tabnak.ir/client/themes/fa/main/img/favicon.ico",
-    categories: [
-      {
-        id: "all",
-        category: "جدیدترین ها",
-        rssUrl: "https://www.tabnak.ir/fa/rss/allnews",
-      },
-    ],
-  },
-
+  // {
+  //   name: "jomhor",
+  //   displayName: "خبرگزاری جمهور",
+  //   websiteUrl: "https://www.jomhornews.com",
+  //   iconUrl: "https://www.jomhornews.com/favicon.ico",
+  //   categories: [
+  //     {
+  //       id: "all",
+  //       category: "جدیدترین ها",
+  //       rssUrl:
+  //         "https://www.jomhornews.com/rssb5.-er48r6--4qhfle2m.puirug.r.xml",
+  //     },
+  //   ],
+  // },
+  // {
+  //   name: "tabnak",
+  //   displayName: "تابناک",
+  //   websiteUrl: "https://www.tabnak.ir",
+  //   iconUrl: "https://www.tabnak.ir/client/themes/fa/main/img/favicon.ico",
+  //   categories: [
+  //     {
+  //       id: "all",
+  //       category: "جدیدترین ها",
+  //       rssUrl: "https://www.tabnak.ir/fa/rss/allnews",
+  //     },
+  //   ],
+  // },
   {
     name: "shahraranews",
     displayName: "شهرآرا نیوز",
